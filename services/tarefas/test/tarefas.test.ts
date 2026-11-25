@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { criarRepositorioEmMemoria } from '../src/adapters/repositorio-em-memoria.mjs';
-import { criarCasosDeUsoDeTarefas } from '../src/application/tarefas.mjs';
-import { TituloInvalido } from '../src/domain/tarefa.mjs';
+import { criarRepositorioEmMemoria } from '../src/adapters/repositorio-em-memoria.ts';
+import type { RepositorioDeTarefas } from '../src/application/ports/repositorio-de-tarefas.ts';
+import { criarCasosDeUsoDeTarefas } from '../src/application/tarefas.ts';
+import { TituloInvalido } from '../src/domain/tarefa.ts';
 
 test('adiciona e lista as tarefas na ordem em que foram criadas', () => {
   const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioEmMemoria());
@@ -20,8 +21,15 @@ test('adiciona e lista as tarefas na ordem em que foram criadas', () => {
 });
 
 test('rejeita um título vazio antes de salvar', () => {
-  const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioEmMemoria());
+  const repositorio: RepositorioDeTarefas = {
+    salvar() {
+      assert.fail('O repositório recebeu um título inválido.');
+    },
+    listar() {
+      return [];
+    },
+  };
+  const tarefas = criarCasosDeUsoDeTarefas(repositorio);
 
   assert.throws(() => tarefas.adicionarTarefa('   '), TituloInvalido);
-  assert.deepEqual(tarefas.listarTarefas(), []);
 });

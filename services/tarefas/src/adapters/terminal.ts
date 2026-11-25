@@ -1,7 +1,13 @@
 import { createInterface } from 'node:readline';
-import { TituloInvalido } from '../domain/tarefa.mjs';
+import type { Readable, Writable } from 'node:stream';
+import type { CasosDeUsoDeTarefas } from '../application/ports/casos-de-uso-de-tarefas.ts';
+import { TituloInvalido } from '../domain/tarefa.ts';
 
-export async function executarTerminal(tarefas, entrada, saida) {
+export async function executarTerminal(
+  tarefas: CasosDeUsoDeTarefas,
+  entrada: Readable,
+  saida: Writable,
+): Promise<void> {
   const linhas = createInterface({ input: entrada, crlfDelay: Infinity });
   saida.write('Comandos: adicionar <título>, listar, sair\n');
 
