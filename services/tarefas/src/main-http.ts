@@ -1,12 +1,15 @@
+import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { criarServidorHttp } from './adapters/http.ts';
 import { criarRepositorioEmMemoria } from './adapters/repositorio-em-memoria.ts';
 import { criarRepositorioSqlite } from './adapters/repositorio-sqlite.ts';
 import { criarCasosDeUsoDeTarefas } from './application/tarefas.ts';
 
-const banco = process.argv.includes('--sqlite') ? new DatabaseSync('tarefas.sqlite') : undefined;
+const banco = process.argv.includes('--sqlite')
+  ? new DatabaseSync('tarefas.sqlite', { timeout: 5000 })
+  : undefined;
 const repositorio = banco ? criarRepositorioSqlite(banco) : criarRepositorioEmMemoria();
-const tarefas = criarCasosDeUsoDeTarefas(repositorio);
+const tarefas = criarCasosDeUsoDeTarefas(repositorio, randomUUID);
 const servidor = criarServidorHttp(tarefas);
 
 if (banco) {

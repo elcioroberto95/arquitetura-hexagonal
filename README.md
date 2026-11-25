@@ -13,3 +13,7 @@ Na [aula do adaptador HTTP](services/tarefas/aulas/02-http/README.md), você vai
 ## Aula 3 · Um adaptador de saída com SQLite
 
 Na [aula do SQLite](services/tarefas/aulas/03-sqlite/README.md), você vai trocar o repositório em memória por um banco em arquivo e conferir se as tarefas sobrevivem ao reinício do servidor.
+
+## Aula 4 · Identidade e estado de uma tarefa
+
+Na [aula sobre concluir tarefas](services/tarefas/aulas/04-concluir-tarefa/README.md), você vai concluir por ID uma de duas tarefas com o mesmo título e seguir a mudança de estado pelo código.
