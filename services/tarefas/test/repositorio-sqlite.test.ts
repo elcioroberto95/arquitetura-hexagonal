@@ -4,13 +4,71 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
+import { criarOutboxSqlite } from '../src/adapters/outbox-sqlite.ts';
 import { criarRepositorioSqlite } from '../src/adapters/repositorio-sqlite.ts';
+import { publicarEventosPendentes } from '../src/application/publicar-eventos-pendentes.ts';
 import { criarCasosDeUsoDeTarefas } from '../src/application/tarefas.ts';
 import type { Tarefa } from '../src/domain/tarefa.ts';
 
 function comTituloEmTexto(tarefa: Tarefa) {
   return { ...tarefa, titulo: tarefa.titulo.valor };
 }
+
+test('publica eventos da outbox da Aula 7 e não repete os já marcados', () => {
+  const banco = new DatabaseSync(':memory:');
+  try {
+    banco.exec(`
+      CREATE TABLE outbox (id INTEGER PRIMARY KEY, tipo TEXT NOT NULL, tarefa_id TEXT NOT NULL) STRICT;
+      INSERT INTO outbox (tipo, tarefa_id) VALUES ('TarefaConcluida', 'tarefa-1'), ('TarefaConcluida', 'tarefa-2');
+    `);
+    const outbox = criarOutboxSqlite(banco);
+    const publicados: string[] = [];
+    publicarEventosPendentes(outbox, {
+      publicar(evento) {
+        publicados.push(evento.tarefaId);
+      },
+    });
+
+    assert.deepEqual(publicados, ['tarefa-1', 'tarefa-2']);
+    assert.deepEqual(criarOutboxSqlite(banco).listarPendentes(), []);
+    assert.equal(banco.prepare('SELECT COUNT(*) AS total FROM outbox WHERE publicado = 1').get()?.total, 2);
+  } finally {
+    banco.close();
+  }
+});
+
+test('deixa pendente a publicação que falhou e permite tentar novamente', () => {
+  const banco = new DatabaseSync(':memory:');
+  try {
+    let sequencia = 0;
+    const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioSqlite(banco), () => `tarefa-${++sequencia}`);
+    const primeira = tarefas.adicionarTarefa('Revisar a outbox');
+    const segunda = tarefas.adicionarTarefa('Testar a publicação');
+    tarefas.concluirTarefa(primeira.id);
+    tarefas.concluirTarefa(segunda.id);
+    const outbox = criarOutboxSqlite(banco);
+
+    assert.throws(() => publicarEventosPendentes(outbox, {
+      publicar(evento) {
+        if (evento.tarefaId === segunda.id) {
+          throw new Error('Destino indisponível');
+        }
+      },
+    }), /Destino indisponível/);
+
+    assert.deepEqual(outbox.listarPendentes().map(({ evento }) => evento.tarefaId), [segunda.id]);
+    const publicados: string[] = [];
+    publicarEventosPendentes(outbox, {
+      publicar(evento) {
+        publicados.push(evento.tarefaId);
+      },
+    });
+    assert.deepEqual(publicados, [segunda.id]);
+    assert.deepEqual(outbox.listarPendentes(), []);
+  } finally {
+    banco.close();
+  }
+});
 
 test('mantém identidade, estado e ordem de criação ao reabrir o banco', (contexto) => {
   const pasta = mkdtempSync(join(tmpdir(), 'hexagonal-tarefas-'));

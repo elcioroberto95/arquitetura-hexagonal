@@ -29,3 +29,7 @@ Na [aula sobre eventos de domínio](services/tarefas/aulas/06-evento-de-dominio/
 ## Aula 7 · Outbox transacional
 
 Na [aula sobre outbox](services/tarefas/aulas/07-outbox/README.md), você vai gravar a conclusão e seu evento na mesma transação e conferir o evento no SQLite.
+
+## Aula 8 · Publicação da outbox
+
+Na [aula sobre publicação da outbox](services/tarefas/aulas/08-publicar-outbox/README.md), você vai publicar os eventos pendentes no console e acompanhar como eles são marcados no SQLite.

@@ -2,9 +2,10 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { RepositorioDeTarefas } from '../application/ports/repositorio-de-tarefas.ts';
 import type { Tarefa } from '../domain/tarefa.ts';
 import { TituloTarefa } from '../domain/titulo-tarefa.ts';
+import { prepararBancoSqlite } from './banco-sqlite.ts';
 
 export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefas {
-  prepararTabela(banco);
+  prepararBancoSqlite(banco);
 
   const inserir = banco.prepare('INSERT INTO tarefas (id_tarefa, titulo, status) VALUES (?, ?, ?)');
   const selecionar = banco.prepare('SELECT id_tarefa, titulo, status FROM tarefas ORDER BY id');
@@ -54,46 +55,5 @@ function lerTarefa({ id_tarefa: id, titulo, status }: Record<string, unknown>): 
     return { id, titulo: TituloTarefa.criar(titulo), status };
   } catch (erro) {
     throw new Error('O SQLite retornou um título inválido.', { cause: erro });
-  }
-}
-
-function prepararTabela(banco: DatabaseSync): void {
-  banco.exec('BEGIN IMMEDIATE');
-  try {
-    const colunas = banco.prepare('PRAGMA table_info(tarefas)').all();
-    const formatoAntigo = colunas.length > 0 && !colunas.some(({ name }) => name === 'id_tarefa');
-    if (formatoAntigo) {
-      banco.exec('ALTER TABLE tarefas RENAME TO tarefas_aula_3');
-    }
-
-    banco.exec(`
-      CREATE TABLE IF NOT EXISTS tarefas (
-        id INTEGER PRIMARY KEY,
-        id_tarefa TEXT NOT NULL UNIQUE,
-        titulo TEXT NOT NULL,
-        status TEXT NOT NULL CHECK (status IN ('pendente', 'concluida'))
-      ) STRICT
-    `);
-
-    banco.exec(`
-      CREATE TABLE IF NOT EXISTS outbox (
-        id INTEGER PRIMARY KEY,
-        tipo TEXT NOT NULL,
-        tarefa_id TEXT NOT NULL
-      ) STRICT
-    `);
-
-    if (formatoAntigo) {
-      banco.exec(`
-        INSERT INTO tarefas (id, id_tarefa, titulo, status)
-        SELECT id, 'legado-' || id, titulo, 'pendente' FROM tarefas_aula_3;
-        DROP TABLE tarefas_aula_3;
-      `);
-    }
-
-    banco.exec('COMMIT');
-  } catch (erro) {
-    banco.exec('ROLLBACK');
-    throw erro;
   }
 }
