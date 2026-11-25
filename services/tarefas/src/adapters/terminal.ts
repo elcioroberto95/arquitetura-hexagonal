@@ -1,7 +1,7 @@
 import { createInterface } from 'node:readline';
 import type { Readable, Writable } from 'node:stream';
 import type { CasosDeUsoDeTarefas } from '../application/ports/casos-de-uso-de-tarefas.ts';
-import { TituloInvalido } from '../domain/tarefa.ts';
+import { TituloInvalido } from '../domain/titulo-tarefa.ts';
 
 export async function executarTerminal(
   tarefas: CasosDeUsoDeTarefas,
@@ -24,7 +24,7 @@ export async function executarTerminal(
         saida.write('Nenhuma tarefa cadastrada.\n');
       }
       for (const tarefa of lista) {
-        saida.write(`- ${tarefa.titulo}\n`);
+        saida.write(`- ${tarefa.titulo.valor}\n`);
       }
       continue;
     }
@@ -33,7 +33,7 @@ export async function executarTerminal(
     if (acao === 'adicionar') {
       try {
         const tarefa = tarefas.adicionarTarefa(palavras.join(' '));
-        saida.write(`Tarefa adicionada: ${tarefa.titulo}\n`);
+        saida.write(`Tarefa adicionada: ${tarefa.titulo.valor}\n`);
       } catch (erro) {
         if (!(erro instanceof TituloInvalido)) {
           throw erro;

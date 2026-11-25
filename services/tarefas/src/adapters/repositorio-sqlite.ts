@@ -1,6 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { RepositorioDeTarefas } from '../application/ports/repositorio-de-tarefas.ts';
 import type { Tarefa } from '../domain/tarefa.ts';
+import { TituloTarefa } from '../domain/titulo-tarefa.ts';
 
 export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefas {
   prepararTabela(banco);
@@ -12,7 +13,7 @@ export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefa
 
   return {
     salvar(tarefa) {
-      inserir.run(tarefa.id, tarefa.titulo, tarefa.status);
+      inserir.run(tarefa.id, tarefa.titulo.valor, tarefa.status);
     },
 
     listar() {
@@ -36,7 +37,11 @@ function lerTarefa({ id_tarefa: id, titulo, status }: Record<string, unknown>): 
   if (typeof id !== 'string' || typeof titulo !== 'string' || (status !== 'pendente' && status !== 'concluida')) {
     throw new Error('O SQLite retornou uma tarefa fora do formato esperado.');
   }
-  return { id, titulo, status };
+  try {
+    return { id, titulo: TituloTarefa.criar(titulo), status };
+  } catch (erro) {
+    throw new Error('O SQLite retornou um título inválido.', { cause: erro });
+  }
 }
 
 function prepararTabela(banco: DatabaseSync): void {
