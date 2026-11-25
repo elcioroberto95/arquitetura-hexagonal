@@ -1,10 +1,12 @@
 import { criarTarefa, marcarComoConcluida } from '../domain/tarefa.ts';
 import type { CasosDeUsoDeTarefas } from './ports/casos-de-uso-de-tarefas.ts';
+import type { PublicadorDeEventos } from './ports/publicador-de-eventos.ts';
 import type { RepositorioDeTarefas } from './ports/repositorio-de-tarefas.ts';
 
 export function criarCasosDeUsoDeTarefas(
   repositorio: RepositorioDeTarefas,
   gerarId: () => string,
+  publicador?: PublicadorDeEventos,
 ): CasosDeUsoDeTarefas {
   return {
     adicionarTarefa(titulo) {
@@ -23,8 +25,14 @@ export function criarCasosDeUsoDeTarefas(
         return undefined;
       }
 
-      const concluida = marcarComoConcluida(tarefa);
-      repositorio.atualizarStatus(concluida.id, concluida.status);
+      const { tarefa: concluida, evento } = marcarComoConcluida(tarefa);
+      if (evento && repositorio.atualizarStatus(concluida.id, concluida.status)) {
+        try {
+          publicador?.publicar(evento);
+        } catch {
+          // A conclusão já foi salva. A publicação local é uma tentativa única.
+        }
+      }
       return concluida;
     },
   };

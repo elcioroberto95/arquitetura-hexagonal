@@ -36,12 +36,14 @@ test('mantém identidade, estado e ordem de criação ao reabrir o banco', (cont
 
   const bancoReaberto = new DatabaseSync(caminho);
   try {
-    const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioSqlite(bancoReaberto), gerarId);
+    const repositorio = criarRepositorioSqlite(bancoReaberto);
+    const tarefas = criarCasosDeUsoDeTarefas(repositorio, gerarId);
     assert.deepEqual(tarefas.listarTarefas().map(comTituloEmTexto), [
       { id: 'tarefa-1', titulo: "Revisar o exemplo d'água", status: 'pendente' },
       { id: 'tarefa-2', titulo: 'Estudar SQLite', status: 'pendente' },
       { id: 'tarefa-3', titulo: 'Estudar SQLite', status: 'concluida' },
     ]);
+    assert.equal(repositorio.atualizarStatus('tarefa-3', 'concluida'), false);
   } finally {
     bancoReaberto.close();
   }
