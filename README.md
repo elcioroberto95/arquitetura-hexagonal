@@ -17,3 +17,7 @@ Na [aula do SQLite](services/tarefas/aulas/03-sqlite/README.md), você vai troca
 ## Aula 4 · Identidade e estado de uma tarefa
 
 Na [aula sobre concluir tarefas](services/tarefas/aulas/04-concluir-tarefa/README.md), você vai concluir por ID uma de duas tarefas com o mesmo título e seguir a mudança de estado pelo código.
+
+## Aula 5 · Título como objeto de valor
+
+Na [aula sobre objetos de valor](services/tarefas/aulas/05-objeto-de-valor/README.md), você vai comparar títulos pelo conteúdo e acompanhar como o HTTP e o SQLite convertem esse valor em texto.

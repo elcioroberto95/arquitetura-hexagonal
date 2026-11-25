@@ -10,7 +10,7 @@
     "start:http": "node src/main-http.ts",
     "start:http:sqlite": "node src/main-http.ts --sqlite",
     "check": "tsc --noEmit",
-    "test": "node --test test/tarefas.test.ts test/http.test.ts test/repositorio-sqlite.test.ts"
+    "test": "node --test test/tarefas.test.ts test/http.test.ts test/repositorio-sqlite.test.ts test/titulo-tarefa.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -6,6 +6,11 @@ import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { criarRepositorioSqlite } from '../src/adapters/repositorio-sqlite.ts';
 import { criarCasosDeUsoDeTarefas } from '../src/application/tarefas.ts';
+import type { Tarefa } from '../src/domain/tarefa.ts';
+
+function comTituloEmTexto(tarefa: Tarefa) {
+  return { ...tarefa, titulo: tarefa.titulo.valor };
+}
 
 test('mantém identidade, estado e ordem de criação ao reabrir o banco', (contexto) => {
   const pasta = mkdtempSync(join(tmpdir(), 'hexagonal-tarefas-'));
@@ -32,7 +37,7 @@ test('mantém identidade, estado e ordem de criação ao reabrir o banco', (cont
   const bancoReaberto = new DatabaseSync(caminho);
   try {
     const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioSqlite(bancoReaberto), gerarId);
-    assert.deepEqual(tarefas.listarTarefas(), [
+    assert.deepEqual(tarefas.listarTarefas().map(comTituloEmTexto), [
       { id: 'tarefa-1', titulo: "Revisar o exemplo d'água", status: 'pendente' },
       { id: 'tarefa-2', titulo: 'Estudar SQLite', status: 'pendente' },
       { id: 'tarefa-3', titulo: 'Estudar SQLite', status: 'concluida' },
@@ -51,7 +56,7 @@ test('preserva tarefas da Aula 3 e reaproveita seus IDs depois da migração', (
     `);
 
     const repositorio = criarRepositorioSqlite(banco);
-    assert.deepEqual(repositorio.listar(), [
+    assert.deepEqual(repositorio.listar().map(comTituloEmTexto), [
       { id: 'legado-2', titulo: 'Mesmo título', status: 'pendente' },
       { id: 'legado-12', titulo: 'Mesmo título', status: 'pendente' },
     ]);
@@ -61,7 +66,7 @@ test('preserva tarefas da Aula 3 e reaproveita seus IDs depois da migração', (
     tarefas.adicionarTarefa('Tarefa nova');
 
     const repositorioReinicializado = criarRepositorioSqlite(banco);
-    assert.deepEqual(repositorioReinicializado.listar(), [
+    assert.deepEqual(repositorioReinicializado.listar().map(comTituloEmTexto), [
       { id: 'legado-2', titulo: 'Mesmo título', status: 'pendente' },
       { id: 'legado-12', titulo: 'Mesmo título', status: 'concluida' },
       { id: 'nova-1', titulo: 'Tarefa nova', status: 'pendente' },

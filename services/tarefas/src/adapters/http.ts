@@ -1,7 +1,8 @@
 import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { CasosDeUsoDeTarefas } from '../application/ports/casos-de-uso-de-tarefas.ts';
-import { TituloInvalido } from '../domain/tarefa.ts';
+import type { Tarefa } from '../domain/tarefa.ts';
+import { TituloInvalido } from '../domain/titulo-tarefa.ts';
 
 const LIMITE_CORPO_BYTES = 8 * 1024;
 
@@ -23,7 +24,7 @@ export function criarServidorHttp(tarefas: CasosDeUsoDeTarefas) {
           return;
         }
 
-        responderJson(resposta, 200, concluida);
+        responderJson(resposta, 200, tarefaParaJson(concluida));
         return;
       }
 
@@ -33,7 +34,7 @@ export function criarServidorHttp(tarefas: CasosDeUsoDeTarefas) {
       }
 
       if (requisicao.method === 'GET') {
-        responderJson(resposta, 200, tarefas.listarTarefas());
+        responderJson(resposta, 200, tarefas.listarTarefas().map(tarefaParaJson));
         return;
       }
 
@@ -57,7 +58,7 @@ export function criarServidorHttp(tarefas: CasosDeUsoDeTarefas) {
       }
 
       const tarefa = tarefas.adicionarTarefa(titulo);
-      responderJson(resposta, 201, tarefa);
+      responderJson(resposta, 201, tarefaParaJson(tarefa));
     } catch (erro) {
       if (erro instanceof TituloInvalido) {
         responderJson(resposta, 400, { erro: erro.message });
@@ -68,6 +69,10 @@ export function criarServidorHttp(tarefas: CasosDeUsoDeTarefas) {
       responderJson(resposta, 500, { erro: 'Erro interno ao processar a requisição.' });
     }
   });
+}
+
+function tarefaParaJson({ id, titulo, status }: Tarefa) {
+  return { id, titulo: titulo.valor, status };
 }
 
 async function lerCorpo(requisicao: IncomingMessage): Promise<string | null> {
