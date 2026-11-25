@@ -1,1 +1,3 @@
 node_modules/
+/services/tarefas/tarefas.sqlite
+/services/tarefas/tarefas.sqlite-*
