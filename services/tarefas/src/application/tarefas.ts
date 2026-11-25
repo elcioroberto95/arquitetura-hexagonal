@@ -26,7 +26,7 @@ export function criarCasosDeUsoDeTarefas(
       }
 
       const { tarefa: concluida, evento } = marcarComoConcluida(tarefa);
-      if (evento && repositorio.atualizarStatus(concluida.id, concluida.status)) {
+      if (evento && repositorio.atualizarStatus(concluida.id, concluida.status, evento)) {
         try {
           publicador?.publicar(evento);
         } catch {

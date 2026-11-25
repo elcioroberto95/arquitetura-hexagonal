@@ -44,8 +44,37 @@ test('mantém identidade, estado e ordem de criação ao reabrir o banco', (cont
       { id: 'tarefa-3', titulo: 'Estudar SQLite', status: 'concluida' },
     ]);
     assert.equal(repositorio.atualizarStatus('tarefa-3', 'concluida'), false);
+    tarefas.concluirTarefa('tarefa-3');
+    const eventos = bancoReaberto.prepare('SELECT tipo, tarefa_id FROM outbox ORDER BY id').all();
+    assert.deepEqual(eventos.map((evento) => ({ ...evento })), [
+      { tipo: 'TarefaConcluida', tarefa_id: 'tarefa-3' },
+    ]);
   } finally {
     bancoReaberto.close();
+  }
+});
+
+test('reverte a conclusão se o SQLite rejeitar o registro na outbox', () => {
+  const banco = new DatabaseSync(':memory:');
+  try {
+    const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioSqlite(banco), () => 'tarefa-1');
+    const tarefa = tarefas.adicionarTarefa('Revisar a transação');
+    banco.exec(`
+      CREATE TRIGGER rejeitar_evento BEFORE INSERT ON outbox
+      BEGIN
+        SELECT RAISE(ABORT, 'falha ao registrar evento');
+      END
+    `);
+
+    assert.throws(() => tarefas.concluirTarefa(tarefa.id), /falha ao registrar evento/);
+    assert.equal(tarefas.listarTarefas()[0].status, 'pendente');
+    assert.deepEqual(banco.prepare('SELECT id FROM outbox').all(), []);
+
+    banco.exec('DROP TRIGGER rejeitar_evento');
+    assert.equal(tarefas.concluirTarefa(tarefa.id)?.status, 'concluida');
+    assert.equal(banco.prepare('SELECT id FROM outbox').all().length, 1);
+  } finally {
+    banco.close();
   }
 });
 

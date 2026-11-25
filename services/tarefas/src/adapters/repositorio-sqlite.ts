@@ -10,6 +10,7 @@ export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefa
   const selecionar = banco.prepare('SELECT id_tarefa, titulo, status FROM tarefas ORDER BY id');
   const buscar = banco.prepare('SELECT id_tarefa, titulo, status FROM tarefas WHERE id_tarefa = ?');
   const atualizar = banco.prepare('UPDATE tarefas SET status = ? WHERE id_tarefa = ? AND status <> ?');
+  const registrarEvento = banco.prepare('INSERT INTO outbox (tipo, tarefa_id) VALUES (?, ?)');
 
   return {
     salvar(tarefa) {
@@ -25,12 +26,22 @@ export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefa
       return linha && lerTarefa(linha);
     },
 
-    atualizarStatus(id, status) {
-      const mudou = Boolean(atualizar.run(status, id, status).changes);
-      if (!mudou && !buscar.get(id)) {
-        throw new Error(`Tarefa ${id} não encontrada para atualização.`);
+    atualizarStatus(id, status, evento) {
+      banco.exec('BEGIN IMMEDIATE');
+      try {
+        const mudou = Boolean(atualizar.run(status, id, status).changes);
+        if (!mudou && !buscar.get(id)) {
+          throw new Error(`Tarefa ${id} não encontrada para atualização.`);
+        }
+        if (mudou && evento) {
+          registrarEvento.run(evento.tipo, evento.tarefaId);
+        }
+        banco.exec('COMMIT');
+        return mudou;
+      } catch (erro) {
+        banco.exec('ROLLBACK');
+        throw erro;
       }
-      return mudou;
     },
   };
 }
@@ -61,6 +72,14 @@ function prepararTabela(banco: DatabaseSync): void {
         id_tarefa TEXT NOT NULL UNIQUE,
         titulo TEXT NOT NULL,
         status TEXT NOT NULL CHECK (status IN ('pendente', 'concluida'))
+      ) STRICT
+    `);
+
+    banco.exec(`
+      CREATE TABLE IF NOT EXISTS outbox (
+        id INTEGER PRIMARY KEY,
+        tipo TEXT NOT NULL,
+        tarefa_id TEXT NOT NULL
       ) STRICT
     `);
 
