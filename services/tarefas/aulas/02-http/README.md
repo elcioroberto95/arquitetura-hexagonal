@@ -52,30 +52,30 @@ O formato da requisição depende de como você entrou no sistema. A regra de t�
 ## 4. Perguntas e respostas
 
 <details>
-<summary>1. Qual é a porta que o terminal e o HTTP usam?</summary>
+<summary>1. Hexagonal · Qual porta o terminal e o HTTP usam?</summary>
 
 A porta de entrada `CasosDeUsoDeTarefas`. Os dois adaptadores podem chamar `adicionarTarefa` e `listarTarefas`.
 
 </details>
 
 <details>
-<summary>2. Onde você mudaria a rota de /tarefas para /lista?</summary>
+<summary>2. Hexagonal · Onde você mudaria a rota de /tarefas para /lista?</summary>
 
-Em `adapters/http.ts`, onde o adaptador lê o caminho da requisição. O caso de uso continua sendo o mesmo.
-
-</details>
-
-<details>
-<summary>3. Por que tanto um número quanto um texto vazio dão 400?</summary>
-
-O número tem o formato errado para o campo `titulo`, então o próprio HTTP rejeita o pedido. O texto vazio tem o tipo esperado e chega ao domínio, que aplica a regra de título obrigatório. O HTTP comunica os dois erros como `400`.
+Em `adapters/http.ts`. O caminho faz parte da comunicação HTTP, e a rota continua chamando o mesmo caso de uso pela porta de entrada.
 
 </details>
 
 <details>
-<summary>4. Onde o servidor recebe os casos de uso?</summary>
+<summary>3. DDD · Qual regra define se uma tarefa pode ser criada sem título?</summary>
 
-Em `main-http.ts`, na chamada `criarServidorHttp(tarefas)`. Assim, o adaptador recebe a porta de entrada pronta para usar.
+Toda tarefa precisa ter um título com conteúdo. A regra fica em `criarTarefa`, no domínio, e vale para pedidos do terminal e do HTTP. O adaptador HTTP comunica a rejeição com status `400`.
+
+</details>
+
+<details>
+<summary>4. DDD · Como a palavra “tarefa” aparece nas conversas sobre o serviço e no código?</summary>
+
+Você fala em adicionar uma tarefa e encontra essa ideia em `adicionarTarefa`, `criarTarefa` e `Tarefa`. Usar os mesmos termos do problema nas conversas e no código é o começo do que o DDD chama de **linguagem ubíqua**.
 
 </details>
 
