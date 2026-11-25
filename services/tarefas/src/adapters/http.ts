@@ -9,6 +9,24 @@ export function criarServidorHttp(tarefas: CasosDeUsoDeTarefas) {
   return createServer(async (requisicao, resposta) => {
     try {
       const caminho = requisicao.url?.split('?')[0];
+      const id = caminho?.match(/^\/tarefas\/([\w-]+)\/concluir$/)?.[1];
+      if (id) {
+        if (requisicao.method !== 'PATCH') {
+          resposta.setHeader('Allow', 'PATCH');
+          responderJson(resposta, 405, { erro: 'Método não permitido.' });
+          return;
+        }
+
+        const concluida = tarefas.concluirTarefa(id);
+        if (!concluida) {
+          responderJson(resposta, 404, { erro: 'Tarefa não encontrada.' });
+          return;
+        }
+
+        responderJson(resposta, 200, concluida);
+        return;
+      }
+
       if (caminho !== '/tarefas') {
         responderJson(resposta, 404, { erro: 'Rota não encontrada.' });
         return;
