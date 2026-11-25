@@ -21,3 +21,7 @@ Na [aula sobre concluir tarefas](services/tarefas/aulas/04-concluir-tarefa/READM
 ## Aula 5 · Título como objeto de valor
 
 Na [aula sobre objetos de valor](services/tarefas/aulas/05-objeto-de-valor/README.md), você vai comparar títulos pelo conteúdo e acompanhar como o HTTP e o SQLite convertem esse valor em texto.
+
+## Aula 6 · Evento de domínio
+
+Na [aula sobre eventos de domínio](services/tarefas/aulas/06-evento-de-dominio/README.md), você vai concluir uma tarefa e acompanhar como o evento `TarefaConcluida` chega ao console.

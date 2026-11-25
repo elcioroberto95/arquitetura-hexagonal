@@ -9,7 +9,7 @@ export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefa
   const inserir = banco.prepare('INSERT INTO tarefas (id_tarefa, titulo, status) VALUES (?, ?, ?)');
   const selecionar = banco.prepare('SELECT id_tarefa, titulo, status FROM tarefas ORDER BY id');
   const buscar = banco.prepare('SELECT id_tarefa, titulo, status FROM tarefas WHERE id_tarefa = ?');
-  const atualizar = banco.prepare('UPDATE tarefas SET status = ? WHERE id_tarefa = ?');
+  const atualizar = banco.prepare('UPDATE tarefas SET status = ? WHERE id_tarefa = ? AND status <> ?');
 
   return {
     salvar(tarefa) {
@@ -26,9 +26,11 @@ export function criarRepositorioSqlite(banco: DatabaseSync): RepositorioDeTarefa
     },
 
     atualizarStatus(id, status) {
-      if (!atualizar.run(status, id).changes) {
+      const mudou = Boolean(atualizar.run(status, id, status).changes);
+      if (!mudou && !buscar.get(id)) {
         throw new Error(`Tarefa ${id} não encontrada para atualização.`);
       }
+      return mudou;
     },
   };
 }

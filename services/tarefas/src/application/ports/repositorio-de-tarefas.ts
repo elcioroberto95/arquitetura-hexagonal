@@ -5,5 +5,6 @@ export interface RepositorioDeTarefas {
   /** Retorna as tarefas na ordem em que foram salvas. */
   listar(): Tarefa[];
   buscarPorId(id: string): Tarefa | undefined;
-  atualizarStatus(id: string, status: Tarefa['status']): void;
+  /** Retorna true quando o status foi alterado e false quando já tinha o valor pedido. */
+  atualizarStatus(id: string, status: Tarefa['status']): boolean;
 }

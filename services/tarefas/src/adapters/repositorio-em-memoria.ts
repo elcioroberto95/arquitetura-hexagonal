@@ -26,7 +26,11 @@ export function criarRepositorioEmMemoria(): RepositorioDeTarefas {
       if (!tarefa) {
         throw new Error(`Tarefa ${id} não encontrada para atualização.`);
       }
+      if (tarefa.status === status) {
+        return false;
+      }
       tarefas.set(id, { ...tarefa, status });
+      return true;
     },
   };
 }
