@@ -23,13 +23,21 @@ export function prepararBancoSqlite(banco: DatabaseSync): void {
         id INTEGER PRIMARY KEY,
         tipo TEXT NOT NULL,
         tarefa_id TEXT NOT NULL,
-        publicado INTEGER NOT NULL DEFAULT 0 CHECK (publicado IN (0, 1))
+        publicado INTEGER NOT NULL DEFAULT 0 CHECK (publicado IN (0, 1)),
+        falhas INTEGER NOT NULL DEFAULT 0,
+        proxima_tentativa_em INTEGER NOT NULL DEFAULT 0
       ) STRICT
     `);
 
     const colunasOutbox = banco.prepare('PRAGMA table_info(outbox)').all();
     if (!colunasOutbox.some(({ name }) => name === 'publicado')) {
       banco.exec('ALTER TABLE outbox ADD COLUMN publicado INTEGER NOT NULL DEFAULT 0 CHECK (publicado IN (0, 1))');
+    }
+    if (!colunasOutbox.some(({ name }) => name === 'falhas')) {
+      banco.exec('ALTER TABLE outbox ADD COLUMN falhas INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!colunasOutbox.some(({ name }) => name === 'proxima_tentativa_em')) {
+      banco.exec('ALTER TABLE outbox ADD COLUMN proxima_tentativa_em INTEGER NOT NULL DEFAULT 0');
     }
 
     if (formatoAntigo) {

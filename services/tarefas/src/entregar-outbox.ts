@@ -5,6 +5,8 @@ import { consumirTarefaConcluida } from './application/consumir-tarefa-concluida
 import type { PublicadorDeEventos } from './application/ports/publicador-de-eventos.ts';
 import { publicarEventosPendentes } from './application/publicar-eventos-pendentes.ts';
 
+const esperaAposFalhaMs = 30_000;
+
 const bancoTarefas = new DatabaseSync('tarefas.sqlite', { timeout: 5000 });
 try {
   const outbox = criarOutboxSqlite(bancoTarefas);
@@ -16,7 +18,7 @@ try {
         consumirTarefaConcluida(evento, registro);
       },
     };
-    publicarEventosPendentes(outbox, publicadorLocal);
+    publicarEventosPendentes(outbox, publicadorLocal, esperaAposFalhaMs);
   } finally {
     bancoConclusoes.close();
   }

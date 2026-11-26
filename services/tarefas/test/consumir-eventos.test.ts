@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { criarOutboxSqlite } from '../src/adapters/outbox-sqlite.ts';
 import { criarRegistroDeConclusoesSqlite } from '../src/adapters/registro-de-conclusoes-sqlite.ts';
 import { criarRepositorioSqlite } from '../src/adapters/repositorio-sqlite.ts';
 import { criarCasosDeUsoDeTarefas } from '../src/application/tarefas.ts';
@@ -41,7 +42,7 @@ test('consumir o mesmo evento após reiniciar mantém uma conclusão por tarefa'
   }
 });
 
-test('confirma a outbox só após registrar a conclusão e aceita a nova entrega se a marcação falhar', () => {
+test('agenda nova tentativa após falha e confirma a outbox depois que o consumidor grava', () => {
   const pasta = mkdtempSync(join(tmpdir(), 'hexagonal-entrega-'));
   const arquivoTarefas = join(pasta, 'tarefas.sqlite');
   const arquivoConclusoes = join(pasta, 'conclusoes.sqlite');
@@ -57,7 +58,7 @@ test('confirma a outbox só após registrar a conclusão e aceita a nova entrega
     const tarefas = criarCasosDeUsoDeTarefas(criarRepositorioSqlite(bancoTarefas), () => 'tarefa-1');
     tarefas.concluirTarefa(tarefas.adicionarTarefa('Confirmar a entrega').id);
     criarRegistroDeConclusoesSqlite(bancoConclusoes);
-    const publicado = bancoTarefas.prepare('SELECT publicado FROM outbox');
+    const linhaOutbox = bancoTarefas.prepare('SELECT publicado, falhas, proxima_tentativa_em FROM outbox');
     const totalConclusoes = bancoConclusoes.prepare('SELECT COUNT(*) AS total FROM conclusoes');
 
     bancoConclusoes.exec(`
@@ -66,13 +67,28 @@ test('confirma a outbox só após registrar a conclusão e aceita a nova entrega
         SELECT RAISE(ABORT, 'falha no consumidor');
       END
     `);
+    const inicioDaTentativa = Date.now();
     const falhaNoRegistro = entregar();
     assert.equal(falhaNoRegistro.status, 1);
     assert.match(falhaNoRegistro.stderr, /falha no consumidor/);
-    assert.equal(publicado.get()?.publicado, 0);
+    const pendente = linhaOutbox.get();
+    assert.equal(pendente?.publicado, 0);
+    assert.equal(pendente?.falhas, 1);
+    const horario = pendente.proxima_tentativa_em;
+    assert.ok(typeof horario === 'number' && horario >= inicioDaTentativa + 30_000);
     assert.equal(totalConclusoes.get()?.total, 0);
 
     bancoConclusoes.exec('DROP TRIGGER rejeitar_registro');
+    const outbox = criarOutboxSqlite(bancoTarefas);
+    assert.deepEqual(outbox.listarPendentes(horario - 1), []);
+    assert.equal(outbox.listarPendentes(horario)[0]?.evento.tarefaId, 'tarefa-1');
+    const antesDoHorario = entregar();
+    assert.equal(antesDoHorario.status, 0, antesDoHorario.stderr);
+    assert.equal(totalConclusoes.get()?.total, 0);
+    assert.deepEqual(linhaOutbox.get(), pendente);
+
+    // Simula o fim da espera no banco temporário para exercitar o comando sem um temporizador.
+    bancoTarefas.exec('UPDATE outbox SET proxima_tentativa_em = 0');
     bancoTarefas.exec(`
       CREATE TRIGGER rejeitar_confirmacao BEFORE UPDATE OF publicado ON outbox
       BEGIN
@@ -82,13 +98,15 @@ test('confirma a outbox só após registrar a conclusão e aceita a nova entrega
     const falhaNaMarcacao = entregar();
     assert.equal(falhaNaMarcacao.status, 1);
     assert.match(falhaNaMarcacao.stderr, /falha na marcacao/);
-    assert.equal(publicado.get()?.publicado, 0);
+    assert.equal(linhaOutbox.get()?.publicado, 0);
+    assert.equal(linhaOutbox.get()?.falhas, 1);
     assert.equal(totalConclusoes.get()?.total, 1);
 
     bancoTarefas.exec('DROP TRIGGER rejeitar_confirmacao');
     const novaTentativa = entregar();
     assert.equal(novaTentativa.status, 0, novaTentativa.stderr);
-    assert.equal(publicado.get()?.publicado, 1);
+    assert.equal(linhaOutbox.get()?.publicado, 1);
+    assert.equal(linhaOutbox.get()?.falhas, 1);
     assert.equal(totalConclusoes.get()?.total, 1);
   } finally {
     bancoConclusoes.close();
