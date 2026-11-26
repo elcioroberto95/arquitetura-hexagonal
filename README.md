@@ -37,3 +37,7 @@ Na [aula sobre publicação da outbox](services/tarefas/aulas/08-publicar-outbox
 ## Aula 9 · Consumidor idempotente
 
 Na [aula sobre consumidor idempotente](services/tarefas/aulas/09-consumidor-idempotente/README.md), você vai entregar o mesmo evento duas vezes e conferir que o consumidor registra a conclusão uma só vez.
+
+## Aula 10 · Confirmação de entrega
+
+Na [aula sobre confirmação de entrega](services/tarefas/aulas/10-confirmar-entrega/README.md), você vai entregar o evento ao consumidor local e marcar a outbox depois que ele registrar a conclusão.
