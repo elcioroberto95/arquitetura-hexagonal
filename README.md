@@ -41,3 +41,7 @@ Na [aula sobre consumidor idempotente](services/tarefas/aulas/09-consumidor-idem
 ## Aula 10 · Confirmação de entrega
 
 Na [aula sobre confirmação de entrega](services/tarefas/aulas/10-confirmar-entrega/README.md), você vai entregar o evento ao consumidor local e marcar a outbox depois que ele registrar a conclusão.
+
+## Aula 11 · Nova tentativa com espera
+
+Na [aula sobre nova tentativa](services/tarefas/aulas/11-nova-tentativa/README.md), você vai simular uma falha no consumidor e acompanhar quando o evento pode ser entregue de novo.
