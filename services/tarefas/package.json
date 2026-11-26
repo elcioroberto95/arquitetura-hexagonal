@@ -10,6 +10,7 @@
     "start:http": "node src/main-http.ts",
     "start:http:sqlite": "node src/main-http.ts --sqlite",
     "outbox:publicar": "node src/publicar-outbox.ts",
+    "outbox:entregar": "node src/entregar-outbox.ts",
     "eventos:consumir": "node src/consumir-eventos.ts",
     "check": "tsc --noEmit",
     "test": "node --test test/tarefas.test.ts test/http.test.ts test/repositorio-sqlite.test.ts test/titulo-tarefa.test.ts test/consumir-eventos.test.ts"
