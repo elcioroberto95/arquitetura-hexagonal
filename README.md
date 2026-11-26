@@ -25,3 +25,7 @@ Na [aula sobre objetos de valor](services/tarefas/aulas/05-objeto-de-valor/READM
 ## Aula 6 · Evento de domínio
 
 Na [aula sobre eventos de domínio](services/tarefas/aulas/06-evento-de-dominio/README.md), você vai concluir uma tarefa e acompanhar como o evento `TarefaConcluida` chega ao console.
+
+## Aula 7 · Outbox transacional
+
+Na [aula sobre outbox](services/tarefas/aulas/07-outbox/README.md), você vai gravar a conclusão e seu evento na mesma transação e conferir o evento no SQLite.

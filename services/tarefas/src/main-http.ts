@@ -10,7 +10,7 @@ const banco = process.argv.includes('--sqlite')
   ? new DatabaseSync('tarefas.sqlite', { timeout: 5000 })
   : undefined;
 const repositorio = banco ? criarRepositorioSqlite(banco) : criarRepositorioEmMemoria();
-const tarefas = criarCasosDeUsoDeTarefas(repositorio, randomUUID, eventosNoConsole);
+const tarefas = criarCasosDeUsoDeTarefas(repositorio, randomUUID, banco ? undefined : eventosNoConsole);
 const servidor = criarServidorHttp(tarefas);
 
 if (banco) {
