@@ -33,3 +33,7 @@ Na [aula sobre outbox](services/tarefas/aulas/07-outbox/README.md), você vai gr
 ## Aula 8 · Publicação da outbox
 
 Na [aula sobre publicação da outbox](services/tarefas/aulas/08-publicar-outbox/README.md), você vai publicar os eventos pendentes no console e acompanhar como eles são marcados no SQLite.
+
+## Aula 9 · Consumidor idempotente
+
+Na [aula sobre consumidor idempotente](services/tarefas/aulas/09-consumidor-idempotente/README.md), você vai entregar o mesmo evento duas vezes e conferir que o consumidor registra a conclusão uma só vez.

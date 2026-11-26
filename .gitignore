@@ -1,3 +1,5 @@
 node_modules/
 /services/tarefas/tarefas.sqlite
 /services/tarefas/tarefas.sqlite-*
+/services/tarefas/conclusoes.sqlite
+/services/tarefas/conclusoes.sqlite-*
